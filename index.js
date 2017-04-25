@@ -43,7 +43,13 @@ module.exports = function() {
             ImportDeclaration(path) {
                 const value = path.node.source.value;
                 if(Object.keys(map).indexOf(value) !== -1) {
-                    path.node.source.value = map[value];
+                    var mapValue = map[value];
+                    var from = state.opts.from;
+                    var to = state.opts.to;
+                    if (from && to) {
+                        mapValue = mapValue.replace(from, to);
+                    }
+                    path.node.source.value = mapValue;
                 }
             }
         }
