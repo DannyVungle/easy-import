@@ -40,15 +40,17 @@ walk('.', function(filepath, content) {
 module.exports = function() {
     return {
         'visitor': {
-            ImportDeclaration(path) {
+            ImportDeclaration(path, state) {
                 const value = path.node.source.value;
                 if(Object.keys(map).indexOf(value) !== -1) {
                     var mapValue = map[value];
-                    var from = state.opts.from;
-                    var to = state.opts.to;
-                    if (from && to) {
-                        mapValue = mapValue.replace(from, to);
-                    }
+                    try {
+                      var from = state.opts.from;
+                      var to = state.opts.to;
+                      if (from && to) {
+                          mapValue = mapValue.replace(from, to);
+                      }
+                    } catch (ex) {}
                     path.node.source.value = mapValue;
                 }
             }
