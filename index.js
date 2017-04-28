@@ -33,7 +33,11 @@ var map = {};
 walk('.', function(filepath, content) {
     var matches = content.match(/@provides ([0-9a-z\/]+)/i);
     if(matches) {
-        map[matches[1]] = filepath;
+        if(typeof map[matches[1]] === 'undefined') {
+            map[matches[1]] = filepath;
+        } else {
+            throw new Error(matches[1] + ' already defined: ' + map[matches[1]] + ' -- attempt: ' + filepath);
+        }
     }
 });
 
