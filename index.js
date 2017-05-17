@@ -31,7 +31,7 @@ function walk(rootdir, callback, subdir) {
 var map = {};
 
 walk('.', function(filepath, content) {
-    var matches = content.match(/@provides ([0-9a-z\/]+)/i);
+    var matches = content.match(/@package ([0-9a-z\/]+)/i);
     if(matches) {
         if(typeof map[matches[1]] === 'undefined') {
             map[matches[1]] = filepath;

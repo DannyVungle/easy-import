@@ -1,6 +1,6 @@
 {
   "name": "easy-import",
-  "version": "0.0.7",
+  "version": "0.1.0",
   "description": "Babel plugin. An easy way to include modules in your JavaScript code. ",
   "main": "index.js",
   "scripts": {
