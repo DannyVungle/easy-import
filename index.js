@@ -17,7 +17,7 @@ function walk(rootdir, callback, subdir) {
   fs.readdirSync(abspath).forEach(function(filename) {
     var filepath = path.join(abspath, filename);
     if (fs.statSync(filepath).isDirectory()) {
-        if(excludes.indexOf(filepath) === -1) {
+        if(excludes.indexOf(filepath) === -1 && filepath.indexOf('.') !== 0) {
             walk(rootdir, callback, unixifyPath(path.join(subdir || '', filename || '')));
         }
     } else {
