@@ -11,12 +11,12 @@ A package-like importer for JavaScript and Babel.
 
 1. `from` - folder you are building your files from
 1. `to` - folder you are building your files to
-1. `ignore` - default `node_modules` - ignore directories in root
+1. `directories` - directories to traverse to find packages
 
 `"plugins": [["easy-import", {
   "from": "src",
   "to": "dist",
-  "ignore": ["node_modules", "coverage"]
+  "directories": ["src", "test"]
 }]]`
 
 ## Example
