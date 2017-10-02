@@ -1,62 +1,58 @@
-var fs = require('fs');
-var path = require('path');
+const fs = require('fs');
+const path = require('path');
 
-var excludes = ['node_modules'];
-
-var win32 = process.platform === 'win32';
-function unixifyPath(filepath) {
-  if (win32) {
-    return filepath.replace(/\\/g, '/');
-  } else {
-    return filepath;
-  }
-}
-
-function walk(rootdir, callback, subdir) {
-  var abspath = subdir ? path.join(rootdir, subdir) : rootdir;
-  fs.readdirSync(abspath).forEach(function(filename) {
-    var filepath = path.join(abspath, filename);
-    if (fs.statSync(filepath).isDirectory()) {
-        if(excludes.indexOf(filepath) === -1 && filepath.indexOf('.') !== 0) {
-            walk(rootdir, callback, unixifyPath(path.join(subdir || '', filename || '')));
+const findFile = (rootDir, value, subDir) => {
+    const absolutePath = subDir || rootDir;
+    let file;
+    fs.readdirSync(absolutePath).forEach((fileName) => {
+        if (file) {
+            return;
         }
-    } else {
-      callback(process.cwd() + '/' + unixifyPath(filepath), fs.readFileSync(filepath, {
-        encoding: 'utf-8'
-      }));
-    }
-  });
-}
-
-var map = {};
-
-walk('.', function(filepath, content) {
-    var matches = content.match(/@package ([0-9a-z\/]+)/i);
-    if(matches) {
-        if(typeof map[matches[1]] === 'undefined') {
-            map[matches[1]] = filepath;
-        } else {
-            throw new Error(matches[1] + ' already defined: ' + map[matches[1]] + ' -- attempt: ' + filepath);
+        const filePath = path.join(absolutePath, fileName);
+        const stat = fs.statSync(filePath);
+        if (stat.isDirectory()) {
+            file = findFile(rootDir, value, filePath);
+            return;
         }
-    }
-});
+        const ext = path.extname(filePath);
+        if (ext === '.js' || ext === '.jsx') {
+            const content = fs.readFileSync(filePath, { encoding: 'utf-8' });
+            if (content.indexOf(`@package ${value}\n`) !== -1) {
+                file = filePath;
+            }
+        }
+    });
+    return file;
+};
+
+const cacheMap = {};
 
 module.exports = function() {
     return {
-        'visitor': {
-            ImportDeclaration(path, state) {
-                const value = path.node.source.value;
-                if(Object.keys(map).indexOf(value) !== -1) {
-                    var mapValue = map[value];
-                    try {
-                      var from = state.opts.from;
-                      var to = state.opts.to;
-                      if (from && to) {
-                          mapValue = mapValue.replace(from, to);
-                      }
-                    } catch (ex) {}
-                    path.node.source.value = mapValue;
+        visitor: {
+            ImportDeclaration(p, state) {
+                const dirsToTraverse = state.opts.directories;
+                const value = p.node.source.value;
+                if (cacheMap[value]) {
+                    p.node.source.value = cacheMap[value];
+                    return;
                 }
+                const rootDir = process.cwd();
+                let file = null;
+                dirsToTraverse.forEach((dir) => {
+                    if (file) {
+                        return;
+                    }
+                    file = findFile(path.join(rootDir, dir), value);
+                    if (file) {
+                        const { from, to } = state.opts;
+                        if (from && to) {
+                            file = file.replace(from, to);
+                        }
+                        p.node.source.value = file;
+                        cacheMap[value] = file;
+                    }
+                });
             }
         }
     };
